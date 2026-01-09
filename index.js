@@ -57,7 +57,8 @@ async function run() {
         const listing = await listingsCollection.findOne({
           _id: new ObjectId(id),
         });
-        if (!listing) return res.status(404).send({ message: "Listing not found" });
+        if (!listing)
+          return res.status(404).send({ message: "Listing not found" });
         res.send(listing);
       } catch (err) {
         res.status(400).send({ message: "Invalid ID" });
@@ -84,7 +85,9 @@ async function run() {
     app.get("/api/orders", async (req, res) => {
       const email = req.query.email;
       if (!email) {
-        return res.status(400).send({ message: "Email query parameter is required" });
+        return res
+          .status(400)
+          .send({ message: "Email query parameter is required" });
       }
       try {
         const orders = await ordersCollection
@@ -102,7 +105,9 @@ async function run() {
     app.delete("/api/orders/:id", async (req, res) => {
       const id = req.params.id;
       try {
-        const result = await ordersCollection.deleteOne({ _id: new ObjectId(id) });
+        const result = await ordersCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
         if (result.deletedCount === 0) {
           return res.status(404).send({ message: "Order not found" });
         }
@@ -115,17 +120,14 @@ async function run() {
 
     console.log("Connected to MongoDB!");
   } finally {
-  
   }
 }
 
 run().catch(console.dir);
 
-
 app.get("/", (req, res) => {
   res.send("Adoption server is running");
 });
-
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
