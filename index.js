@@ -28,11 +28,7 @@ async function run() {
 
     const listingsCollection = db.collection("products");
     const ordersCollection = db.collection("orders");
-    const addListingCollection = db.collection("addlisting"); // ✅ new collection
-
-    // ===============================
-    // Listings Endpoints
-    // ===============================
+    const addListingCollection = db.collection("addlisting");
 
     app.get("/api/listings", async (req, res) => {
       const limit = parseInt(req.query.limit) || 20;
@@ -58,11 +54,6 @@ async function run() {
       }
     });
 
-    // ===============================
-    // Add Listing Endpoints
-    // ===============================
-
-    // Add new user listing
     app.post("/api/addlisting", async (req, res) => {
       try {
         const newListing = req.body;
@@ -80,11 +71,12 @@ async function run() {
       }
     });
 
-    // Get listings for a specific user
     app.get("/api/addlisting", async (req, res) => {
       const email = req.query.email;
       if (!email)
-        return res.status(400).send({ message: "Email query parameter is required" });
+        return res
+          .status(400)
+          .send({ message: "Email query parameter is required" });
 
       try {
         const listings = await addListingCollection
@@ -98,9 +90,20 @@ async function run() {
       }
     });
 
-    // ===============================
-    // Orders Endpoints
-    // ===============================
+    app.delete("/api/addlisting/:id", async (req, res) => {
+      const id = req.params.id;
+      try {
+        const result = await addListingCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+        if (result.deletedCount === 0)
+          return res.status(404).send({ message: "Listing not found" });
+        res.send({ message: "Listing deleted successfully" });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: "Failed to delete listing" });
+      }
+    });
 
     app.post("/api/orders", async (req, res) => {
       try {
@@ -116,7 +119,9 @@ async function run() {
     app.get("/api/orders", async (req, res) => {
       const email = req.query.email;
       if (!email)
-        return res.status(400).send({ message: "Email query parameter is required" });
+        return res
+          .status(400)
+          .send({ message: "Email query parameter is required" });
 
       try {
         const orders = await ordersCollection
@@ -133,7 +138,9 @@ async function run() {
     app.delete("/api/orders/:id", async (req, res) => {
       const id = req.params.id;
       try {
-        const result = await ordersCollection.deleteOne({ _id: new ObjectId(id) });
+        const result = await ordersCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
         if (result.deletedCount === 0)
           return res.status(404).send({ message: "Order not found" });
         res.send({ message: "Order deleted successfully" });
