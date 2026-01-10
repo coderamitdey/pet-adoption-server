@@ -75,20 +75,20 @@ async function run() {
     res.send(data);
   });
 
-  // app.delete("/api/orders/:id", async (req, res) => {
-  //   const id = req.params.id;
-  //   try {
-  //     const result = await ordersCollection.deleteOne({
-  //       _id: new ObjectId(id),
-  //     });
-  //     if (result.deletedCount === 0)
-  //       return res.status(404).send({ message: "Order not found" });
-  //     res.send({ message: "Order deleted successfully" });
-  //   } catch (err) {
-  //     console.error(err);
-  //     res.status(500).send({ message: "Failed to delete order" });
-  //   }
-  // });
+  app.delete("/api/orders/:id", async (req, res) => {
+    const id = req.params.id;
+    try {
+      const result = await ordersCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      if (result.deletedCount === 0)
+        return res.status(404).send({ message: "Order not found" });
+      res.send({ message: "Order deleted successfully" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send({ message: "Failed to delete order" });
+    }
+  });
 }
 
 run();
