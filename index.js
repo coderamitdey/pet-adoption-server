@@ -90,10 +90,10 @@ async function run() {
 
 run();
 
-app.get("/", (req, res) => {
-  res.send("Server running");
-});
+// app.get("/", (req, res) => {
+//   res.send("Server running");
+// });
 
-app.listen(port, () => {
-  console.log(`Server running on ${port}`);
+// app.listen(port, () => {
+//   console.log(`Server running on ${port}`);
 });
