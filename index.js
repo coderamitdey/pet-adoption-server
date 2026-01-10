@@ -5,11 +5,9 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection URI
 const uri =
   "mongodb+srv://petdbUser:dQUvrnaNIK9O5Wmq@cluster0.zvnbuvn.mongodb.net/?appName=Cluster0";
 
@@ -22,146 +20,83 @@ const client = new MongoClient(uri, {
 });
 
 async function run() {
-  try {
-    await client.connect();
-    const db = client.db("pet_db");
+  await client.connect();
+  const db = client.db("pet_db");
+  const listingsCollection = db.collection("products");
+  const ordersCollection = db.collection("orders");
 
-    const listingsCollection = db.collection("products");
-    const ordersCollection = db.collection("orders");
-    const addListingCollection = db.collection("addlisting");
+  app.get("/api/listings", async (req, res) => {
+    const data = await listingsCollection.find({}).sort({ _id: -1 }).toArray();
+    res.send(data);
+  });
 
-    app.get("/api/listings", async (req, res) => {
-      const limit = parseInt(req.query.limit) || 20;
-      const listings = await listingsCollection
-        .find({})
-        .sort({ _id: -1 })
-        .limit(limit)
-        .toArray();
-      res.send(listings);
+  app.get("/api/my-listings", async (req, res) => {
+    const email = req.query.email;
+    const data = await listingsCollection
+      .find({ email })
+      .sort({ _id: -1 })
+      .toArray();
+    res.send(data);
+  });
+
+  app.get("/api/listings/:id", async (req, res) => {
+    const data = await listingsCollection.findOne({
+      _id: new ObjectId(req.params.id),
     });
+    res.send(data);
+  });
 
-    app.get("/api/listings/:id", async (req, res) => {
-      const id = req.params.id;
-      try {
-        const listing = await listingsCollection.findOne({
-          _id: new ObjectId(id),
-        });
-        if (!listing)
-          return res.status(404).send({ message: "Listing not found" });
-        res.send(listing);
-      } catch (err) {
-        res.status(400).send({ message: "Invalid ID" });
-      }
+  app.post("/api/listings", async (req, res) => {
+    const newListing = req.body;
+    if (!newListing.email)
+      return res.status(400).send({ message: "Email required" });
+    const result = await listingsCollection.insertOne(newListing);
+    res.send(result);
+  });
+
+  app.delete("/api/listings/:id", async (req, res) => {
+    const result = await listingsCollection.deleteOne({
+      _id: new ObjectId(req.params.id),
     });
+    res.send(result);
+  });
 
-    app.post("/api/addlisting", async (req, res) => {
-      try {
-        const newListing = req.body;
-        if (!newListing.email)
-          return res.status(400).send({ message: "User email is required" });
+  app.post("/api/orders", async (req, res) => {
+    const result = await ordersCollection.insertOne(req.body);
+    res.send(result);
+  });
 
-        const result = await addListingCollection.insertOne(newListing);
-        res.send({
-          message: "Listing added successfully!",
-          listingId: result.insertedId,
-        });
-      } catch (err) {
-        console.error(err);
-        res.status(500).send({ message: "Failed to add listing" });
-      }
-    });
+  app.get("/api/orders", async (req, res) => {
+    const email = req.query.email;
+    const data = await ordersCollection
+      .find({ email })
+      .sort({ _id: -1 })
+      .toArray();
+    res.send(data);
+  });
 
-    app.get("/api/addlisting", async (req, res) => {
-      const email = req.query.email;
-      if (!email)
-        return res
-          .status(400)
-          .send({ message: "Email query parameter is required" });
-
-      try {
-        const listings = await addListingCollection
-          .find({ email })
-          .sort({ _id: -1 })
-          .toArray();
-        res.send(listings);
-      } catch (err) {
-        console.error(err);
-        res.status(500).send({ message: "Failed to fetch listings" });
-      }
-    });
-
-    app.delete("/api/addlisting/:id", async (req, res) => {
-      const id = req.params.id;
-      try {
-        const result = await addListingCollection.deleteOne({
-          _id: new ObjectId(id),
-        });
-        if (result.deletedCount === 0)
-          return res.status(404).send({ message: "Listing not found" });
-        res.send({ message: "Listing deleted successfully" });
-      } catch (err) {
-        console.error(err);
-        res.status(500).send({ message: "Failed to delete listing" });
-      }
-    });
-
-    app.post("/api/orders", async (req, res) => {
-      try {
-        const newOrder = req.body;
-        const result = await ordersCollection.insertOne(newOrder);
-        res.send(result);
-      } catch (err) {
-        console.error(err);
-        res.status(500).send({ message: "Failed to place order" });
-      }
-    });
-
-    app.get("/api/orders", async (req, res) => {
-      const email = req.query.email;
-      if (!email)
-        return res
-          .status(400)
-          .send({ message: "Email query parameter is required" });
-
-      try {
-        const orders = await ordersCollection
-          .find({ email })
-          .sort({ _id: -1 })
-          .toArray();
-        res.send(orders);
-      } catch (err) {
-        console.error(err);
-        res.status(500).send({ message: "Failed to fetch orders" });
-      }
-    });
-
-    app.delete("/api/orders/:id", async (req, res) => {
-      const id = req.params.id;
-      try {
-        const result = await ordersCollection.deleteOne({
-          _id: new ObjectId(id),
-        });
-        if (result.deletedCount === 0)
-          return res.status(404).send({ message: "Order not found" });
-        res.send({ message: "Order deleted successfully" });
-      } catch (err) {
-        console.error(err);
-        res.status(500).send({ message: "Failed to delete order" });
-      }
-    });
-
-    console.log("Connected to MongoDB!");
-  } finally {
-    // Keep connection alive
-  }
+  // app.delete("/api/orders/:id", async (req, res) => {
+  //   const id = req.params.id;
+  //   try {
+  //     const result = await ordersCollection.deleteOne({
+  //       _id: new ObjectId(id),
+  //     });
+  //     if (result.deletedCount === 0)
+  //       return res.status(404).send({ message: "Order not found" });
+  //     res.send({ message: "Order deleted successfully" });
+  //   } catch (err) {
+  //     console.error(err);
+  //     res.status(500).send({ message: "Failed to delete order" });
+  //   }
+  // });
 }
 
-run().catch(console.dir);
+run();
 
 app.get("/", (req, res) => {
-  res.send("Adoption server is running");
+  res.send("Server running");
 });
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running on ${port}`);
 });
