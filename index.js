@@ -48,8 +48,7 @@ async function run() {
 
   app.post("/api/listings", async (req, res) => {
     const newListing = req.body;
-    if (!newListing.email)
-      return res.status(400).send({ message: "Email required" });
+    if (!newListing.email) return res.status(400).send({ message: "Email required" });
     const result = await listingsCollection.insertOne(newListing);
     res.send(result);
   });
@@ -81,11 +80,9 @@ async function run() {
       const result = await ordersCollection.deleteOne({
         _id: new ObjectId(id),
       });
-      if (result.deletedCount === 0)
-        return res.status(404).send({ message: "Order not found" });
+      if (result.deletedCount === 0) return res.status(404).send({ message: "Order not found" });
       res.send({ message: "Order deleted successfully" });
     } catch (err) {
-      console.error(err);
       res.status(500).send({ message: "Failed to delete order" });
     }
   });
